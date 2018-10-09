@@ -2,8 +2,9 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const User = require('./models/user');
 const bcrypt = require('bcryptjs');
-var FacebookStrategy = require('passport-facebook').Strategy;
+const FacebookStrategy = require('passport-facebook').Strategy;
 const config =require('./config');
+const GoogleStrategy = require('passport-google-oauth20').Strategy; 
 
 passport.serializeUser(function (user, done) {
     done(null, user.id);
@@ -48,7 +49,7 @@ passport.use(new FacebookStrategy(config.facebook,(req,token,refreshToken,profil
         }else{
             User.findOne({email:profile.emails[0].value},(err,user)=>{
                 if(user){
-                    user.facebookId= profile.id;
+                    user.facebook= profile.id;
                     return user.save((err)=>{
                         if(err)return done(null,false<{
                             message:'error in saving id'
@@ -76,4 +77,55 @@ passport.use(new FacebookStrategy(config.facebook,(req,token,refreshToken,profil
             })
         }
     })
+}))
+
+passport.use(new GoogleStrategy({
+    clientID:config.google.googleClientID,
+    clientSecret:config.google.googleClientSecret,
+    callbackURL:config.google.callbackURL,
+    proxy:true
+},(accessToken,refreshToken,profile,done)=>{
+    
+    //console.log(profile);
+    User.findOne({'google':profile.id},(err,user)=>{
+        if(err)return done(err);
+        
+        if(user){
+            return done(null,user);
+        }else{
+            User.findOne({email:profile.emails[0].value},(err,user)=>{
+                if(user){
+                    user.google= profile.id;
+                    return user.save((err)=>{
+                        if(err)return done(null,false<{
+                            message:'error in saving id'
+                        })
+                        return done(null,user);
+                    })
+                }
+                const image = profile.photos[0].value.substring(0,profile.photos[0].value.indexOf('?'));
+
+                var user = new User();
+                user.email = profile.emails[0].value;
+                user.profile.name = profile.name.givenName+' '+profile.name.familyName;
+                user.google = profile.id;
+                user.profile.picture = image;
+                //console.log(user);
+                user.save((err,user)=>{
+                    if(err){
+                        console.log(err);
+                        return done(null,false,{
+                            message:'error in registration'
+                        })
+                    }
+                    return done(null,user);
+                })
+
+
+            })
+        }
+    })
+    
+    
+
 }))

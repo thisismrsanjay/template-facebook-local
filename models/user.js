@@ -7,6 +7,7 @@ const userSchema  = new mongoose.Schema({
         required:true
     },
     facebook:String,
+    google:String,
     profile:{
         name:{type:String},
         picture:{type:String,default:''}

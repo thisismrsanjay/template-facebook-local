@@ -64,6 +64,16 @@ router.get('/auth/facebook/call',passport.authenticate('facebook',{
     failureRedirect:'/'
 }))
 
+router.get('/auth/google/call',
+  passport.authenticate('google', {
+    successRedirect:'/',
+    failureRedirect: '/login'
+}));
+
+router.get('/auth/google', passport.authenticate('google',
+  { scope: ['profile', 'email'] }
+));
+
 router.get('/login',(req,res,next)=>{
     res.render('login',{title:'Login'})
 })
